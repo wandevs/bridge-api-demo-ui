@@ -17,6 +17,7 @@ export default function Home() {
     }
 
     setStep(1);
+    setTxHash('');
     setLoading(true);
     
     const data = new FormData(event.target);
