@@ -14,6 +14,10 @@ export default function Home() {
       return;
     }
 
+    const accounts = await (window as any).ethereum.request({
+      method: 'eth_requestAccounts'
+    });
+
     let response;
     try {
       response = await fetch('https://bridge-api.wanchain.org/api/createTx', {
@@ -21,15 +25,19 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          fromAccount: accounts[0],
+          ...formData,
+        })
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('result', result);
-        // request account 
-        const accounts = await (window as any).ethereum.request({
-          method: 'eth_requestAccounts'
+        // switch wallet network to result.data.chainId
+        await (window as any).ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: result.data.chainId }],
         });
 
         // you should switch wallet network to from chain before send transaction
@@ -37,11 +45,11 @@ export default function Home() {
         let provider = new ethers.BrowserProvider((window as any).ethereum);
         let signer = await provider.getSigner();
         let tx = await signer.sendTransaction({
-          from: accounts[0],
           ...result.data.tx,
         });
-        console.log('tx', tx);
-
+        console.log('tx', tx.hash);
+        await tx.wait();
+        alert('Transaction sent successfully. TxHash: ' + tx.hash);
       } else {
         let message = await response.json();
         alert(message.error);
