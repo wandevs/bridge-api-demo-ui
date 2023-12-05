@@ -6,6 +6,8 @@ Live Demo:
 
 https://bridge-api-demo-ui.vercel.app/
 
+![UI](image.png)
+
 ## Getting Started
 
 To get started with this demo, you will need to have Node.js and Yarn installed on your computer. Once you have those set up, you can install the dependencies.
@@ -16,4 +18,5 @@ To get started with this demo, you will need to have Node.js and Yarn installed 
 $ yarn
 $ yarn dev
 ```
+
 
