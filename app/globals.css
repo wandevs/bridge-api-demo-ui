@@ -44,6 +44,10 @@ button {
   border-radius: 4px;
 }
 
+label {
+  border: none;
+}
+
 button {
   background-color: #4CAF50;
   color: white;

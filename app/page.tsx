@@ -1,18 +1,27 @@
 'use client';
 import { ethers } from 'ethers';
+import { useState } from 'react';
+import { ERC20_ABI } from '../constants/erc20';
 
 export default function Home() {
+  const [loading, setLoading] = useState(false);
+  const [txHash, setTxHash] = useState('');
+  const [step, setStep] = useState(1);
+
   const handleSubmit = async (event: any) => {
     event.preventDefault();
-    const data = new FormData(event.target);
-    const formData = Object.fromEntries(data.entries());
-    console.log(formData);
-
     // check metamask
     if (typeof (window as any).ethereum === 'undefined') {
       alert('Please install MetaMask first.');
       return;
     }
+
+    setStep(1);
+    setLoading(true);
+    
+    const data = new FormData(event.target);
+    const formData = Object.fromEntries(data.entries());
+    console.log(formData);
 
     const accounts = await (window as any).ethereum.request({
       method: 'eth_requestAccounts'
@@ -44,12 +53,41 @@ export default function Home() {
 
         let provider = new ethers.BrowserProvider((window as any).ethereum);
         let signer = await provider.getSigner();
+        if (result.data.approveCheck) {
+          console.log('checking approve...');
+          let isApproved = await checkAllowance(result.data.approveCheck.token, result.data.approveCheck.to, signer, result.data.approveCheck.amount);
+          if (!isApproved) {
+            console.log('sending approve...');
+            let isApproved = await approve(result.data.approveCheck.token, result.data.approveCheck.to, signer, ethers.MaxUint256);
+            if (!isApproved) {
+              alert('Approve failed.');
+              return;
+            }
+          }
+        }
+
+        console.log('sending cross tx...');
         let tx = await signer.sendTransaction({
           ...result.data.tx,
         });
         console.log('tx', tx.hash);
+        setTxHash(tx.hash);
         await tx.wait();
-        alert('Transaction sent successfully. TxHash: ' + tx.hash);
+        setStep(2);
+        // fetch status from https://bridge-api.wanchain.org/api/status/{txHash}
+        // while (true) loop to check status
+        while(true) {
+          let response = await fetch(`https://bridge-api.wanchain.org/api/status/${tx.hash}`);
+          let status = await response.json();
+          console.log('status', status);
+          if (status.success && status.data.status === "Success") {
+            alert('Success');
+            break;
+          } else {
+            console.log('pending...');
+            await new Promise(r => setTimeout(r, 10000));
+          }
+        }
       } else {
         let message = await response.json();
         alert(message.error);
@@ -58,6 +96,8 @@ export default function Home() {
     } catch (error) {
       console.error('Error 2:', error);
     }
+
+    setLoading(false);
   }
   return (
     <div className="container">
@@ -147,8 +187,38 @@ export default function Home() {
         <input type="text" id="amount" name="amount" placeholder='e.g: 0.01' />
       </div>
 
-      <button type="submit" className='bg-blue-500'>Submit</button>
+      {
+        !loading && <button type="submit" className='bg-blue-500'>Submit</button>
+      }
+      {
+        txHash && <div>TxHash: {txHash}</div>
+      }
+      {
+        loading && <div>Processing...({step}/2)</div>
+      }
     </form>
   </div>
   )
 }
+
+async function checkAllowance(tokenAddress: string, spender: string, signer: any, amount: string) {
+  let allowance = await getAllowance(tokenAddress, spender, signer);
+  if (ethers.toBigInt(allowance) < ethers.toBigInt(amount)) {
+    return false;
+  }
+  return true;
+}
+
+async function getAllowance(tokenAddress: string, spender: string, signer: any) {
+  let contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+  let allowance = await contract['allowance(address,address)'](signer.getAddress(), spender);
+  return allowance;
+}
+
+async function approve(tokenAddress: string, spender: string, signer: any, amount: any) {
+  let contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+  let tx = await contract['approve(address,uint256)'](spender, amount);
+  await tx.wait();
+  return true;
+}
+
