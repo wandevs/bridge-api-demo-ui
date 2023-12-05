@@ -95,13 +95,14 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error 2:', error);
+      alert("Tx Error: " + error);
     }
 
     setLoading(false);
   }
   return (
     <div className="container">
-    <h1>Wan Bridge API Demo UI</h1>
+    <h1 className='text-4xl font-bold'>Wan Bridge API Demo UI</h1>
     <form id="bridgeForm" onSubmit={handleSubmit} >
       <div>
         <label htmlFor="fromChain">From Chain:</label>
