@@ -30,7 +30,7 @@ export default function Home() {
 
     let response;
     try {
-      response = await fetch('https://bridge-api.wanchain.org/api/createTx', {
+      response = await fetch('https://bridge-api.wanchain.org/api/createTx2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -38,6 +38,7 @@ export default function Home() {
         body: JSON.stringify({
           fromAccount: accounts[0],
           ...formData,
+          partner: formData.partner || undefined
         })
       });
 
@@ -103,104 +104,152 @@ export default function Home() {
   }
   return (
     <div className="container">
-    <h1 className='text-4xl font-bold'>Wan Bridge API Demo UI</h1>
-    <form id="bridgeForm" onSubmit={handleSubmit} >
-      <div>
-        <label htmlFor="fromChain">From Chain:</label>
-        <select id="fromChain" name="fromChain">
-          <option value="ETH">ETH</option>
-          <option value="XDC">XDC</option>
-          <option value="OETH">OETH</option>
-          <option value="BNB">BNB</option>
-          <option value="ASTR">ASTR</option>
-          <option value="MATIC">MATIC</option>
-          <option value="TLOS">TLOS</option>
-          <option value="OKT">OKT</option>
-          <option value="FTM">FTM</option>
-          <option value="ADA">ADA</option>
-          <option value="AVAX">AVAX</option>
-          <option value="NRG">NRG</option>
-          <option value="WAN">WAN</option>
-          <option value="BROCK">BROCK</option>
-          <option value="MOVR">MOVR</option>
-          <option value="ARETH">ARETH</option>
-          <option value="GLMR">GLMR</option>
-          <option value="FX">FX</option>
-          <option value="GTH">GTH</option>
-          <option value="METIS">METIS</option>
-          <option value="SGB">SGB</option>
-          <option value="ZKETH">ZKETH</option>
-          <option value="ZEN">ZEN</option>
-          <option value="VC">VC</option>
-          <option value="BASEETH">BASEETH</option>
-          <option value="LINEAETH">LINEAETH</option>
-        </select>
-      </div>
+      <h1>Wan Bridge API Demo UI</h1>
+      <form id="bridgeForm" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="fromChain">From Chain</label>
+          <select id="fromChain" name="fromChain">
+            <option value="ETH">ETH</option>
+            <option value="XDC">XDC</option>
+            <option value="OETH">OETH</option>
+            <option value="BNB">BNB</option>
+            <option value="ASTR">ASTR</option>
+            <option value="MATIC">MATIC</option>
+            <option value="TLOS">TLOS</option>
+            <option value="OKT">OKT</option>
+            <option value="FTM">FTM</option>
+            <option value="ADA">ADA</option>
+            <option value="AVAX">AVAX</option>
+            <option value="NRG">NRG</option>
+            <option value="WAN">WAN</option>
+            <option value="BROCK">BROCK</option>
+            <option value="MOVR">MOVR</option>
+            <option value="ARETH">ARETH</option>
+            <option value="GLMR">GLMR</option>
+            <option value="FX">FX</option>
+            <option value="GTH">GTH</option>
+            <option value="METIS">METIS</option>
+            <option value="SGB">SGB</option>
+            <option value="ZKETH">ZKETH</option>
+            <option value="ZEN">ZEN</option>
+            <option value="VC">VC</option>
+            <option value="BASEETH">BASEETH</option>
+            <option value="LINEAETH">LINEAETH</option>
+          </select>
+        </div>
 
-      <div>
-        <label htmlFor="toChain">To Chain:</label>
-        <select id="toChain" name="toChain">
-          <option value="ETH">ETH</option>
-          <option value="XDC">XDC</option>
-          <option value="OETH">OETH</option>
-          <option value="BNB">BNB</option>
-          <option value="ASTR">ASTR</option>
-          <option value="MATIC">MATIC</option>
-          <option value="TLOS">TLOS</option>
-          <option value="OKT">OKT</option>
-          <option value="FTM">FTM</option>
-          <option value="ADA">ADA</option>
-          <option value="AVAX">AVAX</option>
-          <option value="NRG">NRG</option>
-          <option value="WAN">WAN</option>
-          <option value="BROCK">BROCK</option>
-          <option value="MOVR">MOVR</option>
-          <option value="ARETH">ARETH</option>
-          <option value="GLMR">GLMR</option>
-          <option value="FX">FX</option>
-          <option value="GTH">GTH</option>
-          <option value="METIS">METIS</option>
-          <option value="SGB">SGB</option>
-          <option value="ZKETH">ZKETH</option>
-          <option value="ZEN">ZEN</option>
-          <option value="VC">VC</option>
-          <option value="BASEETH">BASEETH</option>
-          <option value="LINEAETH">LINEAETH</option>
-        </select>
-      </div>
+        <div className="form-group">
+          <label htmlFor="toChain">To Chain</label>
+          <select id="toChain" name="toChain">
+            <option value="ETH">ETH</option>
+            <option value="XDC">XDC</option>
+            <option value="OETH">OETH</option>
+            <option value="BNB">BNB</option>
+            <option value="ASTR">ASTR</option>
+            <option value="MATIC">MATIC</option>
+            <option value="TLOS">TLOS</option>
+            <option value="OKT">OKT</option>
+            <option value="FTM">FTM</option>
+            <option value="ADA">ADA</option>
+            <option value="AVAX">AVAX</option>
+            <option value="NRG">NRG</option>
+            <option value="WAN">WAN</option>
+            <option value="BROCK">BROCK</option>
+            <option value="MOVR">MOVR</option>
+            <option value="ARETH">ARETH</option>
+            <option value="GLMR">GLMR</option>
+            <option value="FX">FX</option>
+            <option value="GTH">GTH</option>
+            <option value="METIS">METIS</option>
+            <option value="SGB">SGB</option>
+            <option value="ZKETH">ZKETH</option>
+            <option value="ZEN">ZEN</option>
+            <option value="VC">VC</option>
+            <option value="BASEETH">BASEETH</option>
+            <option value="LINEAETH">LINEAETH</option>
+          </select>
+        </div>
 
-      <div>
-        <label htmlFor="fromToken">From Token:</label>
-        <input type="text" id="fromToken" name="fromToken" placeholder='Input from chain token address here' />
-      </div>
+        <div className="form-group">
+          <label htmlFor="fromToken">From Token</label>
+          <input 
+            type="text" 
+            id="fromToken" 
+            name="fromToken" 
+            placeholder="Input from chain token address here" 
+          />
+        </div>
 
-      <div>
-        <label htmlFor="toToken">To Token:</label>
-        <input type="text" id="toToken" name="toToken" placeholder='Input to chain token address here' />
-      </div>
+        <div className="form-group">
+          <label htmlFor="toToken">To Token</label>
+          <input 
+            type="text" 
+            id="toToken" 
+            name="toToken" 
+            placeholder="Input to chain token address here" 
+          />
+        </div>
 
-      <div>
-        <label htmlFor="toToken">To Account:</label>
-        <input type="text" id="toAccount" name="toAccount" placeholder='Input the recepient address here' />
-      </div>
+        <div className="form-group">
+          <label htmlFor="toAccount">To Account</label>
+          <input 
+            type="text" 
+            id="toAccount" 
+            name="toAccount" 
+            placeholder="Input the recipient address here" 
+          />
+        </div>
 
-      <div>
-        <label htmlFor="amount">Amount:</label>
-        <input type="text" id="amount" name="amount" placeholder='e.g: 0.01' />
-      </div>
+        <div className="form-group">
+          <label htmlFor="amount">Amount</label>
+          <input 
+            type="text" 
+            id="amount" 
+            name="amount" 
+            placeholder="e.g: 0.01" 
+          />
+        </div>
 
-      {
-        !loading && <button type="submit" className='bg-blue-500'>Submit</button>
-      }
-      {
-        txHash && <div>TxHash: {txHash}</div>
-      }
-      {
-        loading && <div>Processing...({step}/2)</div>
-      }
-    </form>
-  </div>
-  )
+        <div className="form-group">
+          <label htmlFor="partner">
+            Partner <span className="text-xs text-gray-400">(Optional)</span>
+          </label>
+          <input 
+            type="text" 
+            id="partner" 
+            name="partner" 
+            placeholder="Enter partner name" 
+          />
+        </div>
+
+        {!loading && (
+          <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white">
+            Submit Transaction
+          </button>
+        )}
+        
+        {(loading || txHash) && (
+          <div className="status-container">
+            {loading && (
+              <div className="loading">
+                <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Processing... (Step {step}/2)</span>
+              </div>
+            )}
+            {txHash && (
+              <div>
+                <div className="text-sm font-medium text-gray-600">Transaction Hash:</div>
+                <div className="tx-hash">{txHash}</div>
+              </div>
+            )}
+          </div>
+        )}
+      </form>
+    </div>
+  );
 }
 
 async function checkAllowance(tokenAddress: string, spender: string, signer: any, amount: string) {
@@ -223,4 +272,3 @@ async function approve(tokenAddress: string, spender: string, signer: any, amoun
   await tx.wait();
   return true;
 }
-
