@@ -50,10 +50,10 @@ export default function Home() {
 
       addLog('Creating cross-chain transaction request...', 'pending');
       const requestBody = {
-        fromAccount: accounts[0],
         ...formData,
         partner: formData.partner || undefined
       };
+
       addLog('Request body:', 'info', requestBody);
 
       const response = await fetch('https://bridge-api.wanchain.org/api/createTx2', {
@@ -68,57 +68,61 @@ export default function Home() {
         const result = await response.json();
         addLog('Received API response:', 'success', result);
 
-        addLog('Switching wallet network...', 'pending');
-        await (window as any).ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: result.data.chainId }],
-        });
-        addLog('Wallet network switched successfully', 'success');
+        if (formData.fromChain !== 'SOL') {
+          addLog('Switching wallet network...', 'pending');
+          await (window as any).ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: result.data.chainId }],
+          });
+          addLog('Wallet network switched successfully', 'success');
 
-        let provider = new ethers.BrowserProvider((window as any).ethereum);
-        let signer = await provider.getSigner();
-        
-        if (result.data.approveCheck) {
-          addLog('Checking allowance...', 'pending');
-          let isApproved = await checkAllowance(result.data.approveCheck.token, result.data.approveCheck.to, signer, result.data.approveCheck.amount);
+          let provider = new ethers.BrowserProvider((window as any).ethereum);
+          let signer = await provider.getSigner();
           
-          if (!isApproved) {
-            addLog('Approval required. Sending approve transaction...', 'pending');
-            let isApproved = await approve(result.data.approveCheck.token, result.data.approveCheck.to, signer, ethers.MaxUint256);
+          if (result.data.approveCheck) {
+            addLog('Checking allowance...', 'pending');
+            let isApproved = await checkAllowance(result.data.approveCheck.token, result.data.approveCheck.to, signer, result.data.approveCheck.amount);
+            
             if (!isApproved) {
-              addLog('Approve transaction failed', 'error');
-              alert('Approve failed.');
-              return;
+              addLog('Approval required. Sending approve transaction...', 'pending');
+              let isApproved = await approve(result.data.approveCheck.token, result.data.approveCheck.to, signer, ethers.MaxUint256);
+              if (!isApproved) {
+                addLog('Approve transaction failed', 'error');
+                alert('Approve failed.');
+                return;
+              }
+              addLog('Approve transaction successful', 'success');
+            } else {
+              addLog('Token already approved', 'success');
             }
-            addLog('Approve transaction successful', 'success');
-          } else {
-            addLog('Token already approved', 'success');
           }
-        }
 
-        addLog('Sending cross-chain transaction...', 'pending');
-        let tx = await signer.sendTransaction({
-          ...result.data.tx,
-        });
-        addLog('Transaction sent:', 'success', { hash: tx.hash });
-        setTxHash(tx.hash);
-        await tx.wait();
-        setStep(2);
-        
-        addLog('Checking cross-chain status...', 'pending');
-        while(true) {
-          let response = await fetch(`https://bridge-api.wanchain.org/api/status/${tx.hash}`);
-          let status = await response.json();
-          addLog('Status check result:', 'info', status);
+          addLog('Sending cross-chain transaction...', 'pending');
+          let tx = await signer.sendTransaction({
+            ...result.data.tx,
+          });
+          addLog('Transaction sent:', 'success', { hash: tx.hash });
+          setTxHash(tx.hash);
+          await tx.wait();
+          setStep(2);
           
-          if (status.success && status.data.status === "Success") {
-            addLog('Cross-chain transaction completed successfully! 🎉', 'success');
-            alert('Success');
-            break;
-          } else {
-            addLog('Transaction pending, checking again in 10 seconds...', 'pending');
-            await new Promise(r => setTimeout(r, 10000));
+          addLog('Checking cross-chain status...', 'pending');
+          while(true) {
+            let response = await fetch(`https://bridge-api.wanchain.org/api/status/${tx.hash}`);
+            let status = await response.json();
+            addLog('Status check result:', 'info', status);
+            
+            if (status.success && status.data.status === "Success") {
+              addLog('Cross-chain transaction completed successfully! 🎉', 'success');
+              alert('Success');
+              break;
+            } else {
+              addLog('Transaction pending, checking again in 10 seconds...', 'pending');
+              await new Promise(r => setTimeout(r, 10000));
+            }
           }
+        } else {
+          console.log('SOL tx', result);
         }
       } else {
         let message = await response.json();
@@ -167,7 +171,7 @@ export default function Home() {
               <option value="XDC">XDC</option>
               <option value="ZEN">ZEN</option>
               <option value="ZKETH">ZKETH</option>
-              {/* <option value="SOL">SOL</option> */}
+              <option value="SOL">SOL</option>
             </select>
           </div>
 
@@ -202,6 +206,16 @@ export default function Home() {
               <option value="ZKETH">ZKETH</option>
               <option value="SOL">SOL</option>
             </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="fromAccount">From Account</label>
+            <input 
+              type="text" 
+              id="fromAccount" 
+              name="fromAccount" 
+              placeholder="Input from chain token address here" 
+            />
           </div>
 
           <div className="form-group">
