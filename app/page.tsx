@@ -94,15 +94,16 @@ export default function Home() {
             const provider = (window as any).solana;
             // Deserialize the transaction using VersionedTransaction
             console.log('Original tx data:', result.data.tx);
-            const buffer = Buffer.from(result.data.tx, 'base64');
+            const buffer = Buffer.from(result.data.tx, 'hex');
             console.log('Decoded buffer:', buffer);
             const tx = VersionedTransaction.deserialize(new Uint8Array(buffer));
             console.log('Deserialized transaction:', tx);
             // Sign and send transaction
             const signature = await provider.signAndSendTransaction(tx);
             addLog('Transaction sent successfully', 'success');
-            addLog('Transaction signature:', 'info', signature);
-            setTxHash(signature);
+            const signatureStr = typeof signature === 'object' ? signature.signature?.toString() : signature.toString();
+            addLog('Transaction signature:', 'info', signatureStr);
+            setTxHash(signatureStr);
             setStep(2);
           } catch (error) {
             addLog('Failed to send transaction', 'error');
