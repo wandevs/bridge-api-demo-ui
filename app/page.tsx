@@ -94,7 +94,7 @@ export default function Home() {
             const provider = (window as any).solana;
             // Deserialize the transaction using VersionedTransaction
             console.log('Original tx data:', result.data.tx);
-            const buffer = Buffer.from(result.data.tx, 'hex');
+            const buffer = Buffer.from(result.data.tx, 'base64');
             console.log('Decoded buffer:', buffer);
             const tx = VersionedTransaction.deserialize(new Uint8Array(buffer));
             console.log('Deserialized transaction:', tx);
