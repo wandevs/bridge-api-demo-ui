@@ -2,6 +2,7 @@
 import { ethers } from 'ethers';
 import { useState } from 'react';
 import { ERC20_ABI } from '../constants/erc20';
+import { VersionedTransaction } from '@solana/web3.js';
 
 interface LogEntry {
   timestamp: Date;
@@ -28,25 +29,44 @@ export default function Home() {
   const handleSubmit = async (event: any) => {
     event.preventDefault();
     // check metamask
-    if (typeof (window as any).ethereum === 'undefined') {
-      addLog('MetaMask not found. Please install MetaMask first.', 'error');
-      alert('Please install MetaMask first.');
-      return;
-    }
-
-    setStep(1);
-    setTxHash('');
-    setLoading(true);
-    setLogs([]); // Clear previous logs
-    
     const data = new FormData(event.target);
     const formData = Object.fromEntries(data.entries());
     
     try {
-      const accounts = await (window as any).ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-      addLog('Connected to wallet', 'success');
+      if (formData.fromChain === 'SOL') {
+        // Check if Phantom wallet is installed
+        const provider = (window as any).solana;
+        if (!provider?.isPhantom) {
+          addLog('Phantom wallet not found. Please install Phantom wallet first.', 'error');
+          alert('Please install Phantom wallet first.');
+          return;
+        }
+        
+        try {
+          const resp = await provider.connect();
+          addLog(`Connected to Phantom wallet: ${resp.publicKey.toString()}`, 'success');
+        } catch (err) {
+          addLog('Failed to connect to Phantom wallet', 'error');
+          throw err;
+        }
+      } else {
+        // Original MetaMask connection logic
+        if (typeof (window as any).ethereum === 'undefined') {
+          addLog('MetaMask not found. Please install MetaMask first.', 'error');
+          alert('Please install MetaMask first.');
+          return;
+        }
+
+        const accounts = await (window as any).ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+        addLog('Connected to wallet', 'success');
+      }
+
+      setStep(1);
+      setTxHash('');
+      setLoading(true);
+      setLogs([]); // Clear previous logs
 
       addLog('Creating cross-chain transaction request...', 'pending');
       const requestBody = {
@@ -68,7 +88,28 @@ export default function Home() {
         const result = await response.json();
         addLog('Received API response:', 'success', result);
 
-        if (formData.fromChain !== 'SOL') {
+        if (formData.fromChain === 'SOL') {
+          addLog('Sending Solana transaction...', 'pending');
+          try {
+            const provider = (window as any).solana;
+            // Deserialize the transaction using VersionedTransaction
+            console.log('Original tx data:', result.data.tx);
+            const buffer = Buffer.from(result.data.tx, 'base64');
+            console.log('Decoded buffer:', buffer);
+            const tx = VersionedTransaction.deserialize(new Uint8Array(buffer));
+            console.log('Deserialized transaction:', tx);
+            // Sign and send transaction
+            const signature = await provider.signAndSendTransaction(tx);
+            addLog('Transaction sent successfully', 'success');
+            addLog('Transaction signature:', 'info', signature);
+            setTxHash(signature);
+            setStep(2);
+          } catch (error) {
+            addLog('Failed to send transaction', 'error');
+            console.error(error);
+            throw error;
+          }
+        } else {
           addLog('Switching wallet network...', 'pending');
           await (window as any).ethereum.request({
             method: 'wallet_switchEthereumChain',
@@ -99,7 +140,10 @@ export default function Home() {
 
           addLog('Sending cross-chain transaction...', 'pending');
           let tx = await signer.sendTransaction({
-            ...result.data.tx,
+            to: result.data.to,
+            data: result.data.tx,
+            value: result.data.value || '0x0',
+            gasLimit: result.data.gasLimit,
           });
           addLog('Transaction sent:', 'success', { hash: tx.hash });
           setTxHash(tx.hash);
@@ -121,8 +165,6 @@ export default function Home() {
               await new Promise(r => setTimeout(r, 10000));
             }
           }
-        } else {
-          console.log('SOL tx', result);
         }
       } else {
         let message = await response.json();
