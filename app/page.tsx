@@ -92,7 +92,7 @@ export default function Home() {
 
       let apiBase = 'https://bridge-api.wanchain.org/api/createTx2';
       // Add testnet parameter for BTC if checkbox is checked
-      if (formData.fromChain === 'BTC' && isBtcTestnet) {
+      if (isBtcTestnet) {
         apiBase = 'https://bridge-api.wanchain.org/api/testnet/createTx2';
       }
 
@@ -182,10 +182,9 @@ export default function Home() {
 
           addLog('Sending cross-chain transaction...', 'pending');
           let tx = await signer.sendTransaction({
-            to: result.data.to,
-            data: result.data.tx,
-            value: result.data.value || '0x0',
-            gasLimit: result.data.gasLimit,
+            to: result.data.tx.to,
+            data: result.data.tx.data,
+            value: result.data.tx.value || '0x0',
           });
           addLog('Transaction sent:', 'success', { hash: tx.hash });
           setTxHash(tx.hash);
@@ -194,7 +193,11 @@ export default function Home() {
           
           addLog('Checking cross-chain status...', 'pending');
           while(true) {
-            let response = await fetch(`https://bridge-api.wanchain.org/api/status/${tx.hash}`);
+            let apiBase = 'https://bridge-api.wanchain.org/api/status';
+            if (isBtcTestnet) {
+              apiBase = 'https://bridge-api.wanchain.org/api/testnet/status';
+            }
+            let response = await fetch(`${apiBase}/${tx.hash}`);
             let status = await response.json();
             addLog('Status check result:', 'info', status);
             
@@ -265,25 +268,20 @@ export default function Home() {
             </select>
           </div>
 
-          {selectedFromChain === 'BTC' && (
-            <div className="flex flex-row items-center">
-              <input
-                type="checkbox"
-                id="btcTestnet"
-                name="btcTestnet"
-                checked={isBtcTestnet}
-                onChange={async (e) => {
-                  setIsBtcTestnet(e.target.checked);
-                  if ((window as any).unisat) {
-                    await (window as any).unisat.requestAccounts();
-                    await (window as any).unisat.switchNetwork(e.target.checked ? 'testnet' : 'livenet');
-                  }
-                }}
-                className="mr-2 w-4"
-              />
-              <label htmlFor="btcTestnet">testnet</label>
-            </div>
-          )}
+          
+          <div className="flex flex-row items-center">
+            <input
+              type="checkbox"
+              id="btcTestnet"
+              name="btcTestnet"
+              checked={isBtcTestnet}
+              onChange={async (e) => {
+                setIsBtcTestnet(e.target.checked);
+              }}
+              className="mr-2 w-4"
+            />
+            <label htmlFor="btcTestnet">testnet</label>
+          </div>
 
           <div className="form-group">
             <label htmlFor="toChain">To Chain</label>
@@ -315,6 +313,7 @@ export default function Home() {
               <option value="ZEN">ZEN</option>
               <option value="ZKETH">ZKETH</option>
               <option value="SOL">SOL</option>
+              <option value="BTC">BTC</option>
             </select>
           </div>
 
