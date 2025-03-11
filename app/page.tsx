@@ -109,6 +109,7 @@ export default function Home() {
       });
 
       if (response.ok) {
+        let txhash;
         const result = await response.json();
         addLog('Received API response:', 'success', result);
 
@@ -125,6 +126,7 @@ export default function Home() {
             });
             addLog('Transaction sent:', 'success', { hash: tx });
             setTxHash(tx);
+            txhash = tx;
             setStep(2);
           } catch (error) {
             addLog('Failed to send transaction', 'error');
@@ -147,6 +149,7 @@ export default function Home() {
             const signatureStr = typeof signature === 'object' ? signature.signature?.toString() : signature.toString();
             addLog('Transaction signature:', 'info', signatureStr);
             setTxHash(signatureStr);
+            txhash = signatureStr;
             setStep(2);
           } catch (error) {
             addLog('Failed to send transaction', 'error');
@@ -190,27 +193,29 @@ export default function Home() {
           });
           addLog('Transaction sent:', 'success', { hash: tx.hash });
           setTxHash(tx.hash);
+          txhash = tx.hash;
           await tx.wait();
           setStep(2);
+        }
+
+        addLog('Checking cross-chain status...', 'pending');
+        let apiBase = 'https://bridge-api.wanchain.org/api/status';
+        if (isBtcTestnet) {
+          apiBase = 'https://bridge-api.wanchain.org/api/testnet/status';
+        }
+        addLog('Api endpoint:', 'info', apiBase);
+        while(true) {
+          let response = await fetch(`${apiBase}/${txhash}`);
+          let status = await response.json();
+          addLog('Status check result:', 'info', status);
           
-          addLog('Checking cross-chain status...', 'pending');
-          while(true) {
-            let apiBase = 'https://bridge-api.wanchain.org/api/status';
-            if (isBtcTestnet) {
-              apiBase = 'https://bridge-api.wanchain.org/api/testnet/status';
-            }
-            let response = await fetch(`${apiBase}/${tx.hash}`);
-            let status = await response.json();
-            addLog('Status check result:', 'info', status);
-            
-            if (status.success && status.data.status === "Success") {
-              addLog('Cross-chain transaction completed successfully! 🎉', 'success');
-              alert('Success');
-              break;
-            } else {
-              addLog('Transaction pending, checking again in 10 seconds...', 'pending');
-              await new Promise(r => setTimeout(r, 10000));
-            }
+          if (status.success && status.data.status === "Success") {
+            addLog('Cross-chain transaction completed successfully! 🎉', 'success');
+            alert('Success');
+            break;
+          } else {
+            addLog('Transaction pending, checking again in 10 seconds...', 'pending');
+            await new Promise(r => setTimeout(r, 10000));
           }
         }
       } else {
@@ -228,6 +233,17 @@ export default function Home() {
 
   return (
     <div className="main-container">
+      <a 
+        href="https://github.com/wandevs/bridge-api-demo-ui.git" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="fixed top-4 right-4 z-50 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-shadow duration-300"
+        title="View on GitHub"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+        </svg>
+      </a>
       <div className="container">
         <h1>Wan Bridge API Demo UI</h1>
         <form id="bridgeForm" onSubmit={handleSubmit}>
@@ -391,7 +407,7 @@ export default function Home() {
             <div className="status-container">
               {loading && (
                 <div className="loading">
-                  <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
