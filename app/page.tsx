@@ -96,6 +96,8 @@ export default function Home() {
         apiBase = 'https://bridge-api.wanchain.org/api/testnet/createTx2';
       }
 
+      addLog('API endpoint:', 'info', apiBase);
+
       addLog('Request body:', 'info', requestBody);
 
       const response = await fetch(apiBase, {
