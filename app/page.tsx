@@ -11,11 +11,25 @@ interface LogEntry {
   json?: any;
 }
 
+interface BridgeFormData {
+  fromChain: string;
+  toChain: string;
+  fromAccount: string;
+  fromToken: string;
+  toToken: string;
+  toAccount: string;
+  amount: string;
+  partner?: string;
+  btcTestnet?: boolean;
+}
+
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [txHash, setTxHash] = useState('');
   const [step, setStep] = useState(1);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [selectedFromChain, setSelectedFromChain] = useState('ETH');
+  const [isBtcTestnet, setIsBtcTestnet] = useState(false);
 
   const addLog = (message: string, type: LogEntry['type'] = 'info', json?: any) => {
     setLogs(prev => [...prev, {
@@ -30,7 +44,7 @@ export default function Home() {
     event.preventDefault();
     // check metamask
     const data = new FormData(event.target);
-    const formData = Object.fromEntries(data.entries());
+    const formData = Object.fromEntries(data.entries()) as unknown as BridgeFormData;
     
     try {
       if (formData.fromChain === 'SOL') {
@@ -69,14 +83,22 @@ export default function Home() {
       setLogs([]); // Clear previous logs
 
       addLog('Creating cross-chain transaction request...', 'pending');
-      const requestBody = {
+      const requestBody: any = {
         ...formData,
         partner: formData.partner || undefined
       };
 
+      delete requestBody.btcTestnet;
+
+      let apiBase = 'https://bridge-api.wanchain.org/api/createTx2';
+      // Add testnet parameter for BTC if checkbox is checked
+      if (formData.fromChain === 'BTC' && isBtcTestnet) {
+        apiBase = 'https://bridge-api.wanchain.org/api/testnet/createTx2';
+      }
+
       addLog('Request body:', 'info', requestBody);
 
-      const response = await fetch('https://bridge-api.wanchain.org/api/createTx2', {
+      const response = await fetch(apiBase, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -88,7 +110,26 @@ export default function Home() {
         const result = await response.json();
         addLog('Received API response:', 'success', result);
 
-        if (formData.fromChain === 'SOL') {
+        if (formData.fromChain === 'BTC') {
+          addLog('Sending BTC transaction...', 'pending');
+          try {
+            await (window as any).unisat.requestAccounts();
+            await (window as any).unisat.switchNetwork(isBtcTestnet ? 'testnet' : 'livenet');
+
+            const txData = result.data.tx;
+
+            const tx = await (window as any).unisat.sendBitcoin(txData.toAccount, txData.value, {
+              memo: txData.memo
+            });
+            addLog('Transaction sent:', 'success', { hash: tx });
+            setTxHash(tx);
+            setStep(2);
+          } catch (error) {
+            addLog('Failed to send transaction', 'error');
+            console.error(error);
+            throw error;
+          }
+        } else if (formData.fromChain === 'SOL') {
           addLog('Sending Solana transaction...', 'pending');
           try {
             const provider = (window as any).solana;
@@ -187,7 +228,12 @@ export default function Home() {
         <form id="bridgeForm" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="fromChain">From Chain</label>
-            <select id="fromChain" name="fromChain">
+            <select 
+              id="fromChain" 
+              name="fromChain"
+              onChange={(e) => setSelectedFromChain(e.target.value)}
+              value={selectedFromChain}
+            >
               {/* <option value="ADA">ADA</option> */}
               <option value="ARETH">ARETH</option>
               <option value="ASTR">ASTR</option>
@@ -215,8 +261,29 @@ export default function Home() {
               <option value="ZEN">ZEN</option>
               <option value="ZKETH">ZKETH</option>
               <option value="SOL">SOL</option>
+              <option value="BTC">BTC</option>
             </select>
           </div>
+
+          {selectedFromChain === 'BTC' && (
+            <div className="flex flex-row items-center">
+              <input
+                type="checkbox"
+                id="btcTestnet"
+                name="btcTestnet"
+                checked={isBtcTestnet}
+                onChange={async (e) => {
+                  setIsBtcTestnet(e.target.checked);
+                  if ((window as any).unisat) {
+                    await (window as any).unisat.requestAccounts();
+                    await (window as any).unisat.switchNetwork(e.target.checked ? 'testnet' : 'livenet');
+                  }
+                }}
+                className="mr-2 w-4"
+              />
+              <label htmlFor="btcTestnet">testnet</label>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="toChain">To Chain</label>
