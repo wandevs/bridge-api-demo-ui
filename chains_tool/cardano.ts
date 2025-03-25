@@ -26,12 +26,12 @@ export async function signAndSendTransaction(txHex: string): Promise<string | vo
                 const witnessSet = CardanoWasm.TransactionWitnessSet.from_hex(witnessSetHex);
                 const redeemers = tx.witness_set().redeemers();
                 if (redeemers) {
-                    console.log('test_sign_and_send() add redeemers ...');
+                    console.log('[ADA] signAndSendTransaction() add redeemers ...');
                     witnessSet.set_redeemers(redeemers);
                 }
 
                 const signedTx = CardanoWasm.Transaction.new(tx.body(), witnessSet, tx.auxiliary_data());
-                console.log(`test_sign_and_send() signedTx len:`, signedTx.to_hex().length);
+                console.log(`[ADA] signAndSendTransaction() signedTx len:`, signedTx.to_hex().length);
 
                 // 2) send
                 let txHash = await walletApi.submitTx(signedTx.to_hex());
