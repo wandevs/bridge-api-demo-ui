@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useState } from 'react';
 import { ERC20_ABI } from '../constants/erc20';
 import { VersionedTransaction } from '@solana/web3.js';
+import {signAndSendTransaction} from "@/chains_tool/cardano";
 
 interface LogEntry {
   timestamp: Date;
@@ -62,6 +63,14 @@ export default function Home() {
         } catch (err) {
           addLog('Failed to connect to Phantom wallet', 'error');
           throw err;
+        }
+      } else if (formData.fromChain === 'ADA') {
+        // Check if Phantom wallet is installed
+        const provider = window.cardano.lace;
+        if (!provider) {
+          addLog('Lace wallet not found. Please install Lace wallet first.', 'error');
+          alert('Please install Lace wallet first.');
+          return;
         }
       } else {
         // Original MetaMask connection logic
@@ -156,6 +165,8 @@ export default function Home() {
             console.error(error);
             throw error;
           }
+        } else if (formData.fromChain === 'ADA') {
+          await signAndSendTransaction(result.data.tx);
         } else {
           addLog('Switching wallet network...', 'pending');
           await (window as any).ethereum.request({
@@ -255,7 +266,7 @@ export default function Home() {
               onChange={(e) => setSelectedFromChain(e.target.value)}
               value={selectedFromChain}
             >
-              {/* <option value="ADA">ADA</option> */}
+              <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
               <option value="ASTR">ASTR</option>
               <option value="AVAX">AVAX</option>
