@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { useState } from 'react';
 import { ERC20_ABI } from '../constants/erc20';
 import { VersionedTransaction } from '@solana/web3.js';
-import {signAndSendTransaction} from "@/chains_tool/cardano";
+import * as cardano from "@/chains_tool/cardano";
 
 interface LogEntry {
   timestamp: Date;
@@ -166,7 +166,10 @@ export default function Home() {
             throw error;
           }
         } else if (formData.fromChain === 'ADA') {
-          await signAndSendTransaction(result.data.tx);
+          const _txHash = await cardano.signAndSendTransaction(result.data.tx);
+          setTxHash(_txHash);
+          txhash = _txHash;
+          setStep(2);
         } else {
           addLog('Switching wallet network...', 'pending');
           await (window as any).ethereum.request({

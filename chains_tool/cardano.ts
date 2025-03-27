@@ -16,7 +16,7 @@ declare global {
     }
 }
 
-export async function signAndSendTransaction(txHex: string): Promise<string | void> {
+export async function signAndSendTransaction(txHex: string): Promise<string> {
     if (window.cardano && window.cardano.lace) {
 
         const handler = async function (walletApi: Lace) {
@@ -48,8 +48,7 @@ export async function signAndSendTransaction(txHex: string): Promise<string | vo
             throw new Error("Cardano wallet not enabled");
         });
 
-        const txHash = await handler(walletApi);
-
+        return handler(walletApi);
     } else {
         console.error("Cardano wallet is not found");
         throw new Error("Cardano wallet not found");
