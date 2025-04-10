@@ -318,7 +318,7 @@ export default function Home() {
           <div className="form-group">
             <label htmlFor="toChain">To Chain</label>
             <select id="toChain" name="toChain">
-              {/* <option value="ADA">ADA</option> */}
+              <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
               <option value="ASTR">ASTR</option>
               <option value="AVAX">AVAX</option>
