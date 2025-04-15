@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@cosmjs/stargate": "^0.32.2",
     "@emurgo/cardano-serialization-lib-asmjs-gc": "^12.0.1",
     "@solana/web3.js": "^1.98.0",
     "@vechain/dapp-kit": "^1.5.0",

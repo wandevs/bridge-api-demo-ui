@@ -6,6 +6,7 @@ import { VersionedTransaction } from '@solana/web3.js';
 import * as cardano from "@/chains_tool/cardano";
 import { DAppKit } from '@vechain/dapp-kit';
 import { ABIContract, Address, Clause } from '@vechain/sdk-core';
+import * as noble from "@/chains_tool/noble";
 
 interface LogEntry {
   timestamp: Date;
@@ -74,6 +75,14 @@ export default function Home() {
           alert('Please install Lace wallet first.');
           return;
         }
+      } else if (formData.fromChain === 'NOBLE') {
+        // Check if Phantom wallet is installed
+        const provider = window.keplr;
+        if (!provider) {
+          addLog('Lace wallet not found. Please install Keplr wallet first.', 'error');
+          alert('Please install Keplr wallet first.');
+          return;
+        }
       } else {
         // Original MetaMask connection logic
         if (typeof (window as any).ethereum === 'undefined') {
@@ -104,7 +113,9 @@ export default function Home() {
       let apiBase = 'https://bridge-api.wanchain.org/api/createTx2';
       // Add testnet parameter for BTC if checkbox is checked
       if (isBtcTestnet) {
-        apiBase = 'https://bridge-api.wanchain.org/api/testnet/createTx2';
+        apiBase = `https://wan-bridge-tvl-api-git-mainnetalpha-wanchain.vercel.app/api/testnet/createTx2?fromChain=${formData.fromChain}`;
+      }else{
+        apiBase = "https://wan-bridge-tvl-api-git-mainnetalpha-wanchain.vercel.app/api/createTx2";
       }
 
       addLog('API endpoint:', 'info', apiBase);
@@ -169,6 +180,11 @@ export default function Home() {
           }
         } else if (formData.fromChain === 'ADA') {
           const _txHash = await cardano.signAndSendTransaction(result.data.tx);
+          setTxHash(_txHash);
+          txhash = _txHash;
+          setStep(2);
+        } else if (formData.fromChain === 'NOBLE') {
+          const _txHash = await noble.signAndSendTransaction(result.data.tx, isBtcTestnet);
           setTxHash(_txHash);
           txhash = _txHash;
           setStep(2);
@@ -295,6 +311,7 @@ export default function Home() {
               onChange={(e) => setSelectedFromChain(e.target.value)}
               value={selectedFromChain}
             >
+              <option value="NOBLE">NOBLE</option>
               <option value="VET">VET</option>
               <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
@@ -345,6 +362,7 @@ export default function Home() {
           <div className="form-group">
             <label htmlFor="toChain">To Chain</label>
             <select id="toChain" name="toChain">
+              <option value="NOBLE">NOBLE</option>
               <option value="VET">VET</option>
               <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
