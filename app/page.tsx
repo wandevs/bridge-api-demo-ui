@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { ERC20_ABI } from '../constants/erc20';
 import { VersionedTransaction } from '@solana/web3.js';
 import * as cardano from "@/chains_tool/cardano";
+import { DAppKit } from '@vechain/dapp-kit';
+import { ABIContract, Address, Clause, VET, Units } from '@vechain/sdk-core';
 
 interface LogEntry {
   timestamp: Date;
@@ -170,6 +172,27 @@ export default function Home() {
           setTxHash(_txHash);
           txhash = _txHash;
           setStep(2);
+        } else if (formData.fromChain === 'VET') {
+          const kit = await getVechainProvider(isBtcTestnet);
+          if (result.data.approveCheck) {
+            addLog('Approval required. Sending approve transaction...', 'pending');
+            const clauses = generatorErc20ApproveData(result.data.approveCheck.token, result.data.approveCheck.to, result.data.approveCheck.amount);
+            await sendVeTransaction(kit, clauses, formData.fromAccount);
+            addLog('Approve transaction successful', 'success');
+          }
+
+          addLog('Sending cross-chain transaction...', 'pending');
+          let tx = await sendVeTransaction(kit, [
+            {
+              to: result.data.tx.to,
+              data: result.data.tx.data,
+              value: result.data.tx.value || '0x0',
+            }
+          ], formData.fromAccount);
+          addLog('Transaction sent:', 'success', { hash: tx });
+          setTxHash(tx);
+          txhash = tx;
+          setStep(2);
         } else {
           addLog('Switching wallet network...', 'pending');
           await (window as any).ethereum.request({
@@ -269,6 +292,7 @@ export default function Home() {
               onChange={(e) => setSelectedFromChain(e.target.value)}
               value={selectedFromChain}
             >
+              <option value="VET">VET</option>
               <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
               <option value="ASTR">ASTR</option>
@@ -318,6 +342,7 @@ export default function Home() {
           <div className="form-group">
             <label htmlFor="toChain">To Chain</label>
             <select id="toChain" name="toChain">
+              <option value="VET">VET</option>
               <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
               <option value="ASTR">ASTR</option>
@@ -464,6 +489,51 @@ export default function Home() {
       </div>
     </div>
   );
+}
+
+async function getVechainProvider(isTestnet: boolean) {
+  console.log('Getting Vechain provider...', isTestnet);
+  const DefaultProvider = {
+    mainnet: "https://mainnet.vechain.org",
+    testnet: "https://testnet.vechain.org"
+  }
+
+  console.log('1');
+
+  const kit: DAppKit = new DAppKit({ // { thor, vendor, wallet }
+    nodeUrl: DefaultProvider[isTestnet ? 'testnet' : 'mainnet'],
+    genesis: (isTestnet) ? 'test' : 'main'
+  });
+
+  console.log('2');
+  kit.wallet.setSource('veworld');
+
+
+  let {account} = await kit.wallet.connect();
+
+  console.log('3');
+
+  if (!account) {
+    throw new Error('Failed to connect to wallet');
+  }
+  console.log('account', account);
+  return kit;
+}
+
+async function sendVeTransaction(kit: DAppKit, clauses: Connex.VM.Clause[], sender: string) {
+  console.log('Sending transaction...', clauses, sender);
+  let tx = await kit.vendor.sign('tx', clauses).signer(sender);
+  let { txid } = await tx.request();
+  return txid;
+}
+
+function generatorErc20ApproveData(erc20Addr: string, spenderAddr: string, value: string) {
+  let clauses = [Clause.callFunction(
+    Address.of(erc20Addr),
+    ABIContract.ofAbi(ERC20_ABI as any).getFunction('approve'),
+    [spenderAddr, value]
+  )];
+  return clauses;
 }
 
 async function checkAllowance(tokenAddress: string, spender: string, signer: any, amount: string) {
