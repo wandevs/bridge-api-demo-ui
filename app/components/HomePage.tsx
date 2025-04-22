@@ -5,7 +5,7 @@ import { ERC20_ABI } from '../../constants/erc20';
 import { VersionedTransaction } from '@solana/web3.js';
 import * as cardano from "@/chains_tool/cardano";
 import { DAppKit } from '@vechain/dapp-kit';
-import { ABIContract, Address, Clause, VET, Units } from '@vechain/sdk-core';
+import { ABIContract, Address, Clause } from '@vechain/sdk-core';
 
 interface LogEntry {
   timestamp: Date;
