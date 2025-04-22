@@ -175,9 +175,12 @@ export default function Home() {
         } else if (formData.fromChain === 'VET') {
           const kit = await getVechainProvider(isBtcTestnet);
           if (result.data.approveCheck) {
+            const rpcUrl = isBtcTestnet ? 'https://rpc.testnet.dev.node.vechain.org' : 'https://rpc.mainnet.dev.node.vechain.org';
+            let provider = new ethers.JsonRpcProvider(rpcUrl);
             addLog('Approval required. Sending approve transaction...', 'pending');
             const clauses = generatorErc20ApproveData(result.data.approveCheck.token, result.data.approveCheck.to, result.data.approveCheck.amount);
-            await sendVeTransaction(kit, clauses, formData.fromAccount);
+            let txHash = await sendVeTransaction(kit, clauses, formData.fromAccount);
+            await provider.waitForTransaction(txHash);
             addLog('Approve transaction successful', 'success');
           }
 
