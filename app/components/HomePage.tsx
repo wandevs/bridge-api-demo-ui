@@ -212,6 +212,18 @@ export default function Home() {
           setTxHash(tx);
           txhash = tx;
           setStep(2);
+        } else if (formData.fromChain === 'TRX') {
+          let tronWeb = (window as any).tronWeb;
+
+          await (window as any).tronLink.request({method: 'tron_requestAccounts'})
+
+          let contract = tronWeb.contract(result.data.tx.abi, result.data.tx.to);
+
+          let ret = await contract[result.data.tx.func](...result.data.tx.params).send();
+          addLog('Transaction sent:', 'success', { hash: ret });
+          setTxHash(ret);
+          txhash = ret;
+          setStep(2);
         } else {
           addLog('Switching wallet network...', 'pending');
           await (window as any).ethereum.request({
