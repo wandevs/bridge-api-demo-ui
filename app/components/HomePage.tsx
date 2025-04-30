@@ -312,6 +312,8 @@ export default function Home() {
               value={selectedFromChain}
             >
               <option value="NOBLE">NOBLE</option>
+              <option value="TRX">TRX</option>
+              <option value="SOL">SOL</option>
               <option value="VET">VET</option>
               <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
@@ -363,6 +365,8 @@ export default function Home() {
             <label htmlFor="toChain">To Chain</label>
             <select id="toChain" name="toChain">
               <option value="NOBLE">NOBLE</option>
+              <option value="TRX">TRX</option>
+              <option value="SOL">SOL</option>
               <option value="VET">VET</option>
               <option value="ADA">ADA</option>
               <option value="ARETH">ARETH</option>
