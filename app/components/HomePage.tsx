@@ -7,6 +7,7 @@ import * as cardano from "@/chains_tool/cardano";
 import { DAppKit } from '@vechain/dapp-kit';
 import { ABIContract, Address, Clause } from '@vechain/sdk-core';
 import * as noble from "@/chains_tool/noble";
+import { sendTronTx } from "./utils";
 
 interface LogEntry {
   timestamp: Date;
@@ -213,16 +214,17 @@ export default function Home() {
           txhash = tx;
           setStep(2);
         } else if (formData.fromChain === 'TRX') {
-          let tronWeb = (window as any).tronWeb;
-
-          await (window as any).tronLink.request({method: 'tron_requestAccounts'})
-
-          let contract = tronWeb.contract(result.data.tx.abi, result.data.tx.to);
-
-          let ret = await contract[result.data.tx.func](...result.data.tx.params).send();
-          addLog('Transaction sent:', 'success', { hash: ret });
-          setTxHash(ret);
-          txhash = ret;
+          let ret = await sendTronTx({
+            toAddr: result.data.tx.to,
+            functionSelector: result.data.tx.functionSelector,
+            callValue: result.data.tx.value,
+            data: result.data.tx.data,
+            params: result.data.tx.params,
+          });
+          let txHash = Array.isArray(ret) ? ret[0] : ret;
+          addLog('Transaction sent:', 'success', { hash: txHash });
+          setTxHash(txHash);
+          txhash = txHash;
           setStep(2);
         } else {
           addLog('Switching wallet network...', 'pending');
