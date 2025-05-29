@@ -114,9 +114,9 @@ export default function Home() {
       let apiBase = 'https://bridge-api.wanchain.org/api/createTx2';
       // Add testnet parameter for BTC if checkbox is checked
       if (isBtcTestnet) {
-        apiBase = `https://wan-bridge-tvl-api-git-mainnetalpha-wanchain.vercel.app/api/testnet/createTx2?fromChain=${formData.fromChain}`;
+        apiBase = `https://bridge-api.wanchain.org/api/testnet/createTx2?fromChain=${formData.fromChain}`;
       }else{
-        apiBase = "https://wan-bridge-tvl-api-git-mainnetalpha-wanchain.vercel.app/api/createTx2";
+        apiBase = "https://bridge-api.wanchain.org/api/createTx2";
       }
 
       addLog('API endpoint:', 'info', apiBase);
