@@ -76,7 +76,7 @@ export default function Home() {
           alert('Please install Lace wallet first.');
           return;
         }
-      } else if (formData.fromChain === 'NOBLE') {
+      } else if ( ['NOBLE', 'KAVA'].includes(formData.fromChain) ) {
         // Check if Phantom wallet is installed
         const provider = window.keplr;
         if (!provider) {
@@ -184,8 +184,8 @@ export default function Home() {
           setTxHash(_txHash);
           txhash = _txHash;
           setStep(2);
-        } else if (formData.fromChain === 'NOBLE') {
-          const _txHash = await noble.signAndSendTransaction(result.data.tx, isBtcTestnet);
+        } else if ( ['NOBLE', 'KAVA'].includes(formData.fromChain) ) {
+          const _txHash = await noble.signAndSendTransaction(result.data.tx, formData.fromChain, isBtcTestnet);
           setTxHash(_txHash);
           txhash = _txHash;
           setStep(2);
@@ -325,6 +325,7 @@ export default function Home() {
               onChange={(e) => setSelectedFromChain(e.target.value)}
               value={selectedFromChain}
             >
+              <option value="KAVA">KAVA</option>
               <option value="NOBLE">NOBLE</option>
               <option value="TRX">TRX</option>
               <option value="SOL">SOL</option>
@@ -378,6 +379,7 @@ export default function Home() {
           <div className="form-group">
             <label htmlFor="toChain">To Chain</label>
             <select id="toChain" name="toChain">
+              <option value="KAVA">KAVA</option>
               <option value="NOBLE">NOBLE</option>
               <option value="TRX">TRX</option>
               <option value="SOL">SOL</option>

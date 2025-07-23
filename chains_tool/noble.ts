@@ -31,49 +31,58 @@ declare global {
 
 const DefaultChainInfo = {
     "testnet":  {
-        "chainId": "1073741844",
         "chainNameForKeplr": "grand-1",
-        "chainType": "NOBLE",
-        "chainName": "Noble",
-        "symbol": "USDC",
-        "CircleBridge": {
-            "domain": 4,
-            "feeHolder": "noble102rkzjw0p7a6t27ywsgggj2mjhzrarqlu66ys2"
-        },
-        "chainDecimals": 6,
-        "MaskChainId": "grand-1",
-        "TxScanInfo": {
-            "taskInterval": 10000
-        },
         rpc:"https://noble-testnet-rpc.polkachu.com"
     },
     "mainnet": {
-        "chainId": "1073741844",
         "chainNameForKeplr": "noble-1",
-        "chainType": "NOBLE",
-        "chainName": "Noble",
-        "symbol": "USDC",
-        "CircleBridge": {
-            "domain": 4,
-            "feeHolder": "noble1esq4y8zj8u78yrx9h799mkfd5he5jrjgrcl6fn"
-        },
-        "chainDecimals": 6,
-        "MaskChainId": "noble-1",
-        "TxScanInfo": {
-            "taskInterval": 10000
-        },
         rpc: "https://noble-rpc.polkachu.com",
     },
 }
 
+const ChainsInfo = {
+    "NOBLE": {
+        "testnet": {
+            "chainNameForKeplr": "grand-1",
+            rpc: "https://noble-testnet-rpc.polkachu.com"
+        },
+        "mainnet": {
+            "chainNameForKeplr": "noble-1",
+            rpc: "https://noble-rpc.polkachu.com",
+        }
+    },
 
-function get_chainConfig(bMainNet:boolean) {
-    return  bMainNet ? DefaultChainInfo["mainnet"] : DefaultChainInfo["testnet"]
+    "KAVA": {
+        "testnet":  {
+            "chainNameForKeplr": "kava_2221-16000",
+            rpc:"https://rpc.testnet.kava.io",
+        },
+        "mainnet": {
+            "chainNameForKeplr": "kava_2222-10",
+            rpc: "https://rpc.kava-rpc.com",
+        },
+    }
+} as const;
+
+interface ChainConfig {
+    chainNameForKeplr: string;
+    rpc: string;
 }
 
-export async function signAndSendTransaction(txBase64Str: string, isTestnet: boolean): Promise<string> {
+function get_chainConfig(chainName: string, bMainNet: boolean): ChainConfig  {
+    const chainInfo = ChainsInfo[chainName as keyof typeof ChainsInfo];
+
+    if (!chainInfo) {
+        console.warn(`Chain '${chainName}' not found in ChainsInfo.`);
+        throw new Error(`Chain '${chainName}' not found in ChainsInfo.`);
+    }
+
+    return bMainNet ? chainInfo["mainnet"] : chainInfo["testnet"];
+}
+
+export async function signAndSendTransaction(txBase64Str: string, chainName: string, isTestnet: boolean): Promise<string> {
     let bMainNet = !isTestnet;
-    const chainConfig = get_chainConfig(bMainNet);
+    const chainConfig = get_chainConfig(chainName, bMainNet);
     const chainNameForKeplr = chainConfig.chainNameForKeplr;
     console.log("chainNameForKeplr: ", chainNameForKeplr);
     const wallet = window.keplr;
