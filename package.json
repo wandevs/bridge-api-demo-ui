@@ -20,6 +20,9 @@
     "react": "^18",
     "react-dom": "^18"
   },
+  "resolutions": {
+    "axios": "^1.15.0"
+  },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
